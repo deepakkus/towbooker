@@ -1,0 +1,152 @@
+<html>
+    <head>
+        <title>Title</title>
+        
+          <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCz7nCSdu64pveMDxSLd2KvqyfBfBGsnIs&v=3.exp&sensor=false&libraries=places"></script></head>
+    <body>
+          <label class="form-label">User Location</label>
+								<input type="text" id="searchTextField" name="schedule_start" class="form-control register-form_location-holder" >
+								<div style="width:100%;height:300px" id="register-form_map" class="register-formmap register-form_map--user"></div>
+    lat: <input name="user_latitude" value="" class="register-form__latitude-holder" >
+   
+    long: <input name="user_longitude" value="" class="register-form__longitude-holder">
+        
+    <script>
+
+ function initialize() {
+  var input = document.getElementById('searchTextField');
+  new google.maps.places.Autocomplete(input);
+}
+
+google.maps.event.addDomListener(window, 'load', initialize);
+
+
+
+function initAutocomplete() {
+        var map = new google.maps.Map(document.getElementById('map'), {
+          center: {lat: 26.206717244072706, lng: 78.16122292417602},
+          zoom: 13,
+          mapTypeId: 'roadmap'
+        });
+
+        // Create the search box and link it to the UI element.
+        var input = document.getElementById('pac-input');
+        var searchBox = new google.maps.places.SearchBox(input);
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+        // Bias the SearchBox results towards current map's viewport.
+        map.addListener('bounds_changed', function() {
+          searchBox.setBounds(map.getBounds());
+        });
+
+        var markers = [];
+        // Listen for the event fired when the user selects a prediction and retrieve
+        // more details for that place.
+        searchBox.addListener('places_changed', function() {
+          var places = searchBox.getPlaces();
+
+          if (places.length == 0) {
+            return;
+          }
+
+          // Clear out the old markers.
+          markers.forEach(function(marker) {
+            marker.setMap(null);
+          });
+          markers = [];
+
+          // For each place, get the icon, name and location.
+          var bounds = new google.maps.LatLngBounds();
+          places.forEach(function(place) {
+            if (!place.geometry) {
+              console.log("Returned place contains no geometry");
+              return;
+            }
+            var icon = {
+              url: place.icon,
+              size: new google.maps.Size(71, 71),
+              origin: new google.maps.Point(0, 0),
+              anchor: new google.maps.Point(17, 34),
+              scaledSize: new google.maps.Size(25, 25)
+            };
+
+            // Create a marker for each place.
+            markers.push(new google.maps.Marker({
+              map: map,
+              icon: icon,
+              title: place.name,
+              position: place.geometry.location
+            }));
+
+            if (place.geometry.viewport) {
+              // Only geocodes have viewport.
+              bounds.union(place.geometry.viewport);
+            } else {
+              bounds.extend(place.geometry.location);
+            }
+          });
+          map.fitBounds(bounds);
+        });
+      }
+	$(document).ready(function(e) {
+
+		// init map
+		function initMap(lat, long) {	
+
+      var center = new google.maps.LatLng(parseFloat(lat), long);
+        var mapOptions = {center: center, zoom: 16, scrollwheel: false};
+        map = new google.maps.Map(document.getElementById("register-form__map"), mapOptions);
+		marker = new google.maps.Marker({position: new google.maps.LatLng(lat, long), draggable:true, map: map,title: 'Test'});
+
+			google.maps.event.addListener(marker, 'dragend', function (event) {
+				var lat = this.getPosition().lat();
+				var long = this.getPosition().lng();
+				initMap(lat, long);
+				 alert(lat);
+				$('.register-form__latitude-holder').val(lat);
+				$('.register-form__longitude-holder').val(long);
+			});		
+		}
+
+		/**
+         * Geocode when user location input changes
+         */
+		$('body').on('change', '.register-form__location-holder', function(e) {
+			var address = $(this).val();
+			var geocoder = new google.maps.Geocoder();
+			if (geocoder) {
+				geocoder.geocode({ 'address': address }, function (results, status) {
+					if (status == google.maps.GeocoderStatus.OK) {
+						console.log(results[0].geometry.location);
+						var lat = results[0].geometry.location.lat();
+						var long = results[0].geometry.location.lng();
+
+						console.log("lat="+lat);
+						
+						initMap(lat, long);
+						$('.register-form__latitude-holder').val(lat);
+						$('.register-form__longitude-holder').val(long);
+					}
+					else {
+						alert("Kunne ikke finne denne adressen, vennligst skriv en i nærheten og dra pin'en på kartet nærmest mulig riktig posisjon.");
+						$('.register-form__latitude-holder').focus().select();
+					}
+				});
+			}
+
+		});
+								
+		var lat = $('.register-form__latitude-holder').val();
+		var long = $('.register-form__longitude-holder').val();
+		initMap(lat, long);	
+
+			
+});		
+
+
+ 
+	
+	</script>     
+    </body>
+</html>
